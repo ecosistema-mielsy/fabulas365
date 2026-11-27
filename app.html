@@ -267,6 +267,7 @@ textarea{min-height:110px;resize:vertical}
 .agepick button[aria-pressed="true"]{border-color:var(--azul);background:var(--accent-soft)}
 .agepick small{display:block;font-weight:600;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:30px;font-weight:700;z-index:60;max-width:90vw}
+.iebi-card{margin-top:18px;border-color:color-mix(in srgb,var(--verde) 45%,var(--line))}.iebi-card h2{margin:0 0 4px}.iebi-card p{margin:0}.iebi-card>.iebi-ic{flex:0 0 auto;width:auto;min-width:0;font-size:2.2rem;line-height:1}.iebi-card>a.btn{flex:0 0 auto;text-decoration:none}
 .welcome{background:linear-gradient(120deg,color-mix(in srgb,var(--lavanda) 30%,var(--panel)),color-mix(in srgb,var(--verde) 10%,var(--panel)));border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
 .welcome img{width:70px}
 .welcome div{flex:1;min-width:220px}
@@ -346,6 +347,14 @@ canvas.pg{width:100%;height:auto;display:block;border-radius:10px;box-shadow:0 1
 .visor-area canvas{display:block;cursor:default;margin:0 auto}
 @media print{.libro,.vtoggle{display:none!important}}
 
+
+/* Protección: sin selección ni copia del libro (sí en los campos propios); contenido velado si sale de la ventana o pulsa Impr Pant */
+#appWrap,#modalRoot{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#appWrap input,#appWrap textarea,#appWrap [contenteditable],#modalRoot input,#modalRoot textarea{-webkit-user-select:text;user-select:text}
+body.protegido :is(.fable,.libro,.hoja,.visor-area,#readBox,#hoy){filter:blur(22px) saturate(.4);transition:filter .05s}
+.velo{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(20,18,30,.35);cursor:pointer}
+body.protegido .velo{display:flex}
+.velo div{background:#fff;color:#23303C;border-radius:16px;padding:18px 22px;max-width:340px;text-align:center;font:600 1rem/1.4 var(--body);box-shadow:0 12px 40px rgba(0,0,0,.3)}
 </style>
 </head>
 <body>
@@ -1309,9 +1318,52 @@ function render(id){if(id==='hoy')renderHoy();if(id==='leer')renderLeer();if(id=
 function renderAll(){renderWho();const t=TABS.find(t=>!document.getElementById(t).hidden)||'hoy';render(t);}
 TABS.forEach(t=>document.getElementById('t-'+t).addEventListener('click',()=>showTab(t)));
 window.renderAll=renderAll;sel=dayOfYear();renderWho();
+{ const _hoy=renderHoy, _rec=renderRecorrido;   renderHoy=function(){_hoy.apply(this,arguments);if(tieneIEBI())document.getElementById('hoy').append(tarjetaIEBI());};   renderRecorrido=function(){_rec.apply(this,arguments);if(tieneIEBI())document.getElementById('recorrido').append(tarjetaIEBI());}; }
 let start=(location.hash||'').slice(1);if(!TABS.includes(start)){try{start=localStorage.getItem(KEY+'.tab')||'hoy';}catch(e){start='hoy';}}
 showTab(TABS.includes(start)?start:'hoy');
 }
+
+/* ---------- Enlace a la evaluación IEBI-M13 (Instituto MIELSY) ---------- */
+// Enlace del canal «365 Fábulas» en MIELSY Clínico: en el panel de la Dra. estas personas se ven aparte (filtro Organización)
+const IEBI_URL = CFG.IEBI_URL || 'https://ecosistema-mielsy.github.io/app/iebi.html?org=ORG365F';
+/* La evaluación solo se muestra a las licencias cuyo plan la incluye (columna «incluye» de la hoja Planes). */
+function tieneIEBI(){ return !!(S.cuenta && (S.cuenta.incluye || []).includes('iebi')); }
+function tarjetaIEBI(){
+  return h('div',{class:'welcome iebi-card'},
+    h('div',{class:'iebi-ic','aria-hidden':'true'},'🌿'),
+    h('div',{style:'flex:1;min-width:220px'},
+      h('h2',{},'Conoce tu bienestar integral'),
+      h('p',{},'Su plan incluye la evaluación IEBI-M13 del Instituto MIELSY, que mide las mismas 13 dimensiones de las fábulas. En unos 15 minutos sabrás cómo está cada una y recibirás tu informe por correo, con un plan de 30 días para cuidarte.')),
+    h('a',{class:'btn',href:IEBI_URL,target:'_blank',rel:'noopener'},'Hacer mi evaluación IEBI-M13 ↗'));
+}
+
+/* ---------- protección contra copia y capturas ---------- */
+(function () {
+  const campo = t => !!(t && t.closest && t.closest('input,textarea,[contenteditable]'));
+  let ultAviso = 0; const avisar = () => { if (Date.now() - ultAviso < 2500) return; ultAviso = Date.now(); try { toastG('🔒 Contenido protegido: licencia personal'); } catch (e) {} };
+  ['copy', 'cut'].forEach(ev => window.addEventListener(ev, e => { if (campo(e.target)) return; e.preventDefault(); e.stopImmediatePropagation(); avisar(); }, true));
+  window.addEventListener('contextmenu', e => { if (!campo(e.target)) e.preventDefault(); }, true);
+  window.addEventListener('selectstart', e => { if (!campo(e.target)) e.preventDefault(); }, true);
+  window.addEventListener('dragstart', e => { if (!campo(e.target)) e.preventDefault(); }, true);
+  window.addEventListener('keydown', e => {
+    const k = (e.key || '').toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    if (mod && ['c', 'x', 'a'].includes(k) && !campo(e.target)) { e.preventDefault(); avisar(); }
+    if (mod && ['s', 'u'].includes(k)) { e.preventDefault(); avisar(); }
+  }, true);
+  // Captura de pantalla (Impr Pant): se vela el libro y se reemplaza lo copiado
+  const velo = document.createElement('div'); velo.className = 'velo';
+  velo.innerHTML = '<div>🔒 Contenido protegido.<br>Haga clic aquí para seguir leyendo.</div>';
+  velo.onclick = () => document.body.classList.remove('protegido');
+  document.body.append(velo);
+  const ocultar = () => document.body.classList.add('protegido');
+  window.addEventListener('keyup', e => {
+    if (e.key === 'PrintScreen') { ocultar(); try { navigator.clipboard.writeText('Contenido protegido · 365 Fábulas MIELSY® · licencia personal e intransferible'); } catch (x) {} avisar(); }
+  }, true);
+  window.addEventListener('keydown', e => { if (e.key === 'PrintScreen' || (e.metaKey && e.shiftKey && ['3', '4', '5', 's'].includes((e.key || '').toLowerCase()))) ocultar(); }, true);
+  // Herramientas de recorte (Win+Shift+S, etc.) sacan el foco de la ventana: el libro se vela hasta volver
+  window.addEventListener('blur', ocultar);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') ocultar(); });
+})();
 
 document.getElementById('acctBtn').onclick=abrirCuenta;
 arrancar();
