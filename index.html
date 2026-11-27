@@ -161,6 +161,11 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
 @media (prefers-reduced-motion:no-preference){.spin{animation:sp .9s linear infinite}}
 @keyframes sp{to{transform:rotate(360deg)}}
 
+/* elegir moneda (Recurrente) */
+.monsel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.monsel button{border:1.5px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px;padding:9px 8px;font:700 .95rem var(--body);cursor:pointer;line-height:1.25}
+.monsel button small{display:block;font-weight:600;font-size:.76rem;color:var(--muted)}
+.monsel button[aria-checked="true"]{border-color:var(--dorado);background:color-mix(in srgb,var(--dorado) 14%,var(--panel));box-shadow:0 0 0 2px color-mix(in srgb,var(--dorado) 35%,transparent)}
 /* ventana de compra por transferencia */
 .sol{border:none;border-radius:22px;padding:0;width:min(560px,94vw);max-height:92vh;background:var(--panel);color:var(--ink);box-shadow:0 30px 80px -20px rgba(20,25,40,.55)}
 .sol::backdrop{background:rgba(20,22,32,.55);backdrop-filter:blur(2px)}
@@ -256,7 +261,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
         <div style="display:flex;flex-direction:column;gap:14px">
           <div class="eyebrow">Paso 2 de 2 · Pago</div>
           <div class="sum"><span id="coName">Libro digital</span><b id="coPrice">—</b><span>Total</span><b id="coTotal">—</b></div>
-          <div id="reWrap" class="lock" hidden><button class="btn gold" type="button" id="reBtn" style="width:100%">💳 Pagar con tarjeta o transferencia bancaria</button><p class="note" id="reNota" style="margin:6px 0 0;text-align:center"></p></div>
+          <div class="monsel" id="reMon" role="radiogroup" aria-label="Moneda de pago" hidden><button type="button" data-m="USD" role="radio"></button><button type="button" data-m="GTQ" role="radio"></button></div><div id="reWrap" class="lock" hidden><button class="btn gold" type="button" id="reBtn" style="width:100%">💳 Pagar con tarjeta o transferencia bancaria</button><p class="note" id="reNota" style="margin:6px 0 0;text-align:center"></p></div>
           <div id="ppWrap" class="lock"><div id="ppBox"></div></div>
           <p class="alt" id="coAltP">¿No tiene PayPal ni tarjeta? <button type="button" id="coAlt">Pagar por transferencia o depósito</button></p>
           <div class="fb" id="coFb" aria-live="polite">Complete el paso 1 para activar el pago.</div>
@@ -353,6 +358,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     PASARELA_NO_CONFIGURADA: 'El pago con tarjeta todavía no está disponible.',
     PASARELA_NO_RESPONDE: 'La plataforma de pago no respondió. Inténtelo de nuevo en un momento.',
     PEDIDO_NO_ENCONTRADO: 'No encontramos ese pedido. Si se hizo un cargo, escríbanos.',
+    RENOVACION_SIN_LIBRO: 'La renovación es para quien ya tiene el libro. Si es su primera compra, elija el Programa completo MIELSY: incluye el libro de por vida.',
     TELEFONO_INVALIDO: 'Revise el teléfono: escriba solo el número, sin el código de país (entre 6 y 14 dígitos).',
     PAIS_INVALIDO: 'Elija su país.',
     PAGO_NO_COMPLETADO: 'El pago no se completó. No se hizo ningún cargo.',
@@ -489,9 +495,9 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     $('#checkout').scrollIntoView({ behavior: 'smooth', block: 'start' });
     setTimeout(() => $('#coEmail').focus({ preventScroll: true }), 400);
     validar();
-    $('#reWrap').hidden = !CONF.recurrente; $('#ppWrap').hidden = !CONF.paypalClientId;
+    $('#reWrap').hidden = !CONF.recurrente; $('#reMon').hidden = !CONF.recurrente; $('#ppWrap').hidden = !CONF.paypalClientId;
     $('#coAltP').hidden = !CONF.transferencia;
-    if (CONF.recurrente) $('#reNota').textContent = CONF.recurrenteMoneda === 'GTQ' ? 'Se cobra en quetzales: Q' + Math.ceil(p.precio * CONF.tipoCambio).toFixed(2) + ' · Visa, Mastercard o transferencia desde su banco' : 'Visa, Mastercard o transferencia desde su banco';
+    if (CONF.recurrente) pintarMonedas(p);
     if (!CONF.paypalClientId) return;
     const box = $('#ppBox');
     if (box.dataset.ready) return;
@@ -503,7 +509,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       onClick: (data, actions) => validar() ? actions.resolve() : actions.reject(),
       createOrder: async () => {
         const r = await api('crearOrden', { plan: PLAN.codigo, email: $('#coEmail').value.trim().toLowerCase() });
-        if (!r.ok) { $('#coFb').className = 'fb bad'; $('#coFb').textContent = err(r.error); throw new Error(r.error); }
+        if (!r.ok) { errorCompra($('#coFb'), r.error); throw new Error(r.error); }
         return r.orderID;
       },
       onApprove: async (data) => {
@@ -518,12 +524,30 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       onError: () => { $('#coFb').className = 'fb bad'; $('#coFb').textContent = 'PayPal no pudo completar la operación. No se hizo ningún cargo; inténtelo de nuevo.'; }
     }).render('#ppBox');
   }
+  /* Moneda de pago con Recurrente: dólares o quetzales (el comprador elige) */
+  let MONEDA = null;
+  const enGuate = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone === 'America/Guatemala'; } catch (e) { return false; } })();
+  const quetzales = p => Math.ceil(p.precio * (CONF.tipoCambio || 7.8));
+  function pintarMonedas(p) {
+    if (!MONEDA) MONEDA = enGuate ? 'GTQ' : (CONF.recurrenteMoneda || 'USD');
+    const [bu, bq] = $('#reMon').querySelectorAll('button');
+    bu.innerHTML = ''; bu.append('US$' + p.precio.toFixed(p.precio % 1 ? 2 : 0), h('small', {}, 'Pagar en dólares'));
+    bq.innerHTML = ''; bq.append('Q' + quetzales(p), h('small', {}, 'Pagar en quetzales'));
+    [bu, bq].forEach(b => { b.setAttribute('aria-checked', String(b.dataset.m === MONEDA)); b.onclick = () => { MONEDA = b.dataset.m; pintarMonedas(p); }; });
+    $('#reNota').textContent = (MONEDA === 'GTQ' ? 'Se cobra Q' + quetzales(p) + '.00 (tipo de cambio ' + (CONF.tipoCambio || 7.8) + ')' : 'Se cobra US$' + p.precio.toFixed(2)) + ' · Visa, Mastercard o transferencia desde su banco';
+  }
+  /* Muestra un error y, si la renovación no aplica, ofrece pasar al Programa completo */
+  function errorCompra(fb, code) {
+    fb.className = 'fb bad'; fb.textContent = err(code);
+    const prog = code === 'RENOVACION_SIN_LIBRO' && CONF.planes && CONF.planes.find(x => x.codigo === 'PROGRAMA' && x.aLaVenta);
+    if (prog) { fb.append(' ', h('button', { class: 'btn gold', type: 'button', style: 'margin-top:8px', onclick: () => { const e = $('#coEmail').value, e2 = $('#coEmail2').value; elegir(prog); $('#coEmail').value = e; $('#coEmail2').value = e2; validar(); } }, 'Elegir Programa completo · US$' + prog.precio)); }
+  }
   /* ---------- Recurrente: tarjeta o transferencia, con regreso automático ---------- */
   $('#reBtn').onclick = async () => {
     if (!validar()) return;
     const fb = $('#coFb'); $('#reBtn').disabled = true; fb.className = 'fb'; fb.innerHTML = '<span class="spin"></span> Abriendo el pago seguro…';
-    const r = await api('crearCheckout', { plan: PLAN.codigo, email: $('#coEmail').value.trim().toLowerCase() });
-    if (!r.ok) { $('#reBtn').disabled = false; fb.className = 'fb bad'; fb.textContent = err(r.error); return; }
+    const r = await api('crearCheckout', { plan: PLAN.codigo, email: $('#coEmail').value.trim().toLowerCase(), moneda: MONEDA || 'USD' });
+    if (!r.ok) { $('#reBtn').disabled = false; errorCompra(fb, r.error); return; }
     try { window.top.location.href = r.url; } catch (e) { window.open(r.url, '_blank'); }
   };
   async function revisarRegreso() {
