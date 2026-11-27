@@ -963,7 +963,8 @@ async function abrirCuenta() {
     h('div', { class: 'stagehead' }, h('h2', { id: 'actitle' }, 'Mi cuenta'), h('button', { class: 'btn ghost small', onclick: close }, 'Cerrar')),
     h('dl', { class: 'acct' }, h('dt', {}, 'Correo'), h('dd', {}, c.email || ''), h('dt', {}, 'Licencia'), h('dd', {}, (c.licencia || '') + ' · personal e intransferible'),
       h('dt', {}, 'Acceso'), h('dd', {}, (c.incluye || []).map(x => ({ libro: 'Libro digital', iebi: 'IEBI-M13', programa: 'Programa MIELSY', pro: 'Profesional' })[x] || x).join(' · ')),
-      h('dt', {}, 'Vigencia'), h('dd', {}, c.vence ? 'Hasta el ' + fechaCorta(c.vence) : 'Sin vencimiento')),
+      h('dt', {}, 'Vigencia'), h('dd', {}, c.vence ? 'Hasta el ' + fechaCorta(c.vence) : 'Libro: de por vida'),
+      c.venceProg ? h('dt', {}, 'Programa MIELSY') : null, c.venceProg ? h('dd', {}, 'Hasta el ' + fechaCorta(c.venceProg) + ' · ', h('a', { href: (CFG.TIENDA_URL || 'index.html') + '#renovar', target: '_blank', rel: 'noopener' }, 'Renovar')) : null),
     h('div', { class: 'leaf-rule' }, 'Mis dispositivos'), devs,
     h('p', { class: 'note' }, 'Su diario, sus participantes y su progreso se guardan en la nube y aparecen en todos sus dispositivos.'),
     h('div', { class: 'row' }, salir));
@@ -1318,7 +1319,7 @@ function render(id){if(id==='hoy')renderHoy();if(id==='leer')renderLeer();if(id=
 function renderAll(){renderWho();const t=TABS.find(t=>!document.getElementById(t).hidden)||'hoy';render(t);}
 TABS.forEach(t=>document.getElementById('t-'+t).addEventListener('click',()=>showTab(t)));
 window.renderAll=renderAll;sel=dayOfYear();renderWho();
-{ const _hoy=renderHoy, _rec=renderRecorrido;   renderHoy=function(){_hoy.apply(this,arguments);if(tieneIEBI())document.getElementById('hoy').append(tarjetaIEBI());};   renderRecorrido=function(){_rec.apply(this,arguments);if(tieneIEBI())document.getElementById('recorrido').append(tarjetaIEBI());}; }
+{ const _hoy=renderHoy, _rec=renderRecorrido;   renderHoy=function(){_hoy.apply(this,arguments);if(tieneIEBI())document.getElementById('hoy').append(tarjetaIEBI());};   renderRecorrido=function(){_rec.apply(this,arguments);document.getElementById('recorrido').append(tieneIEBI()?tarjetaIEBI():tarjetaAmpliar());}; }
 let start=(location.hash||'').slice(1);if(!TABS.includes(start)){try{start=localStorage.getItem(KEY+'.tab')||'hoy';}catch(e){start='hoy';}}
 showTab(TABS.includes(start)?start:'hoy');
 }
@@ -1328,6 +1329,15 @@ showTab(TABS.includes(start)?start:'hoy');
 const IEBI_URL = CFG.IEBI_URL || 'https://ecosistema-mielsy.github.io/app/iebi.html?org=ORG365F';
 /* La evaluación solo se muestra a las licencias cuyo plan la incluye (columna «incluye» de la hoja Planes). */
 function tieneIEBI(){ return !!(S.cuenta && (S.cuenta.incluye || []).includes('iebi')); }
+/* Quien tiene solo el libro (o cuyo programa terminó) ve en «Mi recorrido» la invitación a agregar el Programa MIELSY. */
+function tarjetaAmpliar(){
+  return h('div',{class:'welcome iebi-card'},
+    h('div',{class:'iebi-ic','aria-hidden':'true'},'🌱'),
+    h('div',{style:'flex:1;min-width:220px'},
+      h('h2',{},'Lleve su lectura al siguiente paso'),
+      h('p',{},'Con el Programa MIELSY evalúa su bienestar con el IEBI-M13 y recibe planes de 30 días según su resultado, durante 6 meses. Su libro sigue siendo suyo de por vida.')),
+    h('a',{class:'btn ghost',href:(CFG.TIENDA_URL||'index.html')+'#renovar',target:'_blank',rel:'noopener'},'Agregar el Programa MIELSY ↗'));
+}
 function tarjetaIEBI(){
   return h('div',{class:'welcome iebi-card'},
     h('div',{class:'iebi-ic','aria-hidden':'true'},'🌿'),
