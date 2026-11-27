@@ -128,6 +128,7 @@ section.sec{padding:44px 0}
 .plan h3{font-size:1.45rem;color:var(--azul-deep)}
 .price{font:700 2.4rem var(--display);color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
 .price small{font:700 .85rem var(--body);color:var(--muted)}
+.precio-q{margin-top:6px;font:700 1rem var(--body);color:var(--azul-deep)}.precio-q small{font-weight:600;color:var(--muted)}
 .plan ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.93rem;flex:1}
 .plan li{display:flex;gap:8px}
 .plan li::before{content:"✓";color:var(--verde);font-weight:800}
@@ -245,7 +246,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     <section class="sec" id="planes">
       <div class="eyebrow">Planes</div>
       <h2>Elija su acceso</h2>
-      <p class="intro">Precios en dólares estadounidenses (USD). Puede pagar con tarjeta, transferencia bancaria o PayPal. Su licencia se activa sola al confirmarse el pago.</p>
+      <p class="intro" id="introPrecios">Precios en dólares (USD) o en quetzales (GTQ): usted elige la moneda al pagar. Puede pagar con tarjeta o transferencia bancaria. Su licencia se activa sola al confirmarse el pago.</p>
       <div class="plans" id="plans"><p class="note"><span class="spin"></span> Cargando precios…</p></div>
       <div class="renovar" id="renovar" hidden></div>
 
@@ -446,6 +447,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
         disp ? h('span', { class: 'tag' }, 'Disponible') : soon ? h('span', { class: 'tag soon' }, 'Próximamente') : null,
         h('h3', {}, p.nombre),
         h('div', { class: 'price' }, p.precio > 0 ? '$' + p.precio.toFixed(p.precio % 1 ? 2 : 0) : 'A medida', ' ', h('small', {}, p.precio > 0 ? 'USD · pago único' : '')),
+        p.precio > 0 && CONF.recurrente ? h('div', { class: 'precio-q' }, 'o Q' + quetzales(p), ' ', h('small', {}, 'quetzales')) : null,
         // Qué dura cada cosa: el libro es de por vida; el programa, los meses del plan
         h('div', { class: 'dura' }, inc.has('libro') ? h('span', {}, '📖 Libro de por vida') : null,
           inc.has('programa') && p.vigenciaMeses ? h('span', {}, `🌱 Programa MIELSY por ${p.vigenciaMeses} meses`) : null),
@@ -459,7 +461,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       const comprar = h('button', { class: 'btn gold' }, 'Renovar o agregar · US$' + renov.precio);
       comprar.onclick = () => (CONF.paypalClientId || CONF.recurrente) ? elegir(renov) : abrirSolicitud(renov);
       rb.append(h('div', {}, h('b', {}, '¿Ya tiene el libro? ' + renov.nombre), h('p', { class: 'note' }, renov.descripcion + ' Use el mismo correo de su compra: si su programa sigue vigente, los meses nuevos se suman al final.')),
-        h('div', { class: 'renov-precio' }, h('b', {}, '$' + renov.precio), h('small', {}, 'USD · pago único'), h('small', {}, '🌱 Programa por ' + renov.vigenciaMeses + ' meses')), comprar);
+        h('div', { class: 'renov-precio' }, h('b', {}, '$' + renov.precio), h('small', {}, 'USD · pago único' + (CONF.recurrente ? ' · o Q' + quetzales(renov) : '')), h('small', {}, '🌱 Programa por ' + renov.vigenciaMeses + ' meses')), comprar);
     }
   }
   /* ---------- compra ---------- */
@@ -664,6 +666,9 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     const r = await api('config');
     if (!r.ok) { $('#plans').innerHTML = ''; $('#plans').append(h('p', { class: 'fb bad' }, err(r.error))); return; }
     CONF = r;
+    $('#introPrecios').textContent = (r.recurrente ? 'Precios en dólares (USD) o en quetzales (GTQ): usted elige la moneda al pagar. ' : 'Precios en dólares estadounidenses (USD). ') +
+      'Puede pagar con ' + [r.recurrente ? 'tarjeta o transferencia bancaria' : '', r.paypalClientId ? 'PayPal' : ''].filter(Boolean).join(' o ') + '. Su licencia se activa sola al confirmarse el pago.';
+    if (!r.recurrente && !r.paypalClientId) $('#introPrecios').textContent = 'Precios en dólares estadounidenses (USD).';
     renderPlanes();
     if (r.muestra && JSON.stringify(r.muestra) !== JSON.stringify(MU)) montarMuestras(r.muestra);
     if (location.hash === '#comprar') { const p = r.planes.find(x => x.codigo === 'LIBRO'); if (p && p.aLaVenta) (r.paypalClientId || r.recurrente) ? elegir(p) : abrirSolicitud(p); }
