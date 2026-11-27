@@ -115,7 +115,10 @@ section.sec{padding:44px 0}
 .spread figcaption{font:700 .8rem var(--body);color:var(--muted);text-align:center;letter-spacing:.04em}
 /* plans */
 .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px;margin-top:26px;align-items:stretch}
-.plan ul{columns:2 230px;column-gap:22px}.plan li{break-inside:avoid}
+.dura{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}.dura span{font:800 .82rem var(--body);padding:4px 10px;border-radius:20px;background:color-mix(in srgb,var(--verde) 14%,var(--panel));color:var(--verde)}.dura span+span{background:color-mix(in srgb,var(--lavanda) 30%,var(--panel));color:var(--lav-deep)}
+.renovar{margin-top:18px;display:flex;align-items:center;gap:18px 26px;flex-wrap:wrap;background:color-mix(in srgb,var(--lavanda) 22%,var(--panel));border:1.5px dashed var(--lav-deep);border-radius:20px;padding:18px 22px}
+.renovar>div:first-child{flex:1;min-width:260px}.renovar .note{margin:4px 0 0}
+.renov-precio b{font:700 2rem var(--display);color:var(--azul-deep)}.renov-precio small{display:block;color:var(--muted);font-weight:700}
 
 @media (max-width:560px){.plans{grid-template-columns:1fr}}
 .plan{background:var(--panel);border:1.5px solid var(--line);border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;gap:12px;position:relative}
@@ -220,6 +223,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       <h2>Elija su acceso</h2>
       <p class="intro">Precios en dólares estadounidenses (USD). PayPal convierte automáticamente desde quetzales u otra moneda de su tarjeta.</p>
       <div class="plans" id="plans"><p class="note"><span class="spin"></span> Cargando precios…</p></div>
+      <div class="renovar" id="renovar" hidden></div>
 
       <div class="checkout" id="checkout" hidden>
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -373,7 +377,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
   let CONF = null, PLAN = null;
   function renderPlanes() {
     const box = $('#plans'); box.innerHTML = '';
-    CONF.planes.forEach(p => {
+    const renov = CONF.planes.find(p => p.codigo === 'RENOVACION');
+    CONF.planes.filter(p => p.codigo !== 'RENOVACION').forEach(p => {
       const inc = new Set(p.incluye);
       const items = [['libro', inc.has('libro')], ['juegos', inc.has('libro')], ['diario', inc.has('libro')], ['iebi', inc.has('iebi')], ['programa', inc.has('programa')], ['pro', inc.has('pro')]];
       const star = p.codigo === 'LIBRO', disp = p.aLaVenta && (p.precio > 0 || p.codigo === 'PRO');
@@ -387,13 +392,23 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       box.append(h('div', { class: 'plan' + (star ? ' star' : '') },
         disp ? h('span', { class: 'tag' }, 'Disponible') : soon ? h('span', { class: 'tag soon' }, 'Próximamente') : null,
         h('h3', {}, p.nombre),
-        h('div', { class: 'price' }, p.precio > 0 ? '$' + p.precio.toFixed(p.precio % 1 ? 2 : 0) : 'A medida', ' ', h('small', {}, p.precio > 0 ? 'USD' + (p.vigenciaMeses ? ` · ${p.vigenciaMeses} meses` : ' · pago único') : '')),
+        h('div', { class: 'price' }, p.precio > 0 ? '$' + p.precio.toFixed(p.precio % 1 ? 2 : 0) : 'A medida', ' ', h('small', {}, p.precio > 0 ? 'USD · pago único' : '')),
+        // Qué dura cada cosa: el libro es de por vida; el programa, los meses del plan
+        h('div', { class: 'dura' }, inc.has('libro') ? h('span', {}, '📖 Libro de por vida') : null,
+          inc.has('programa') && p.vigenciaMeses ? h('span', {}, `🌱 Programa MIELSY por ${p.vigenciaMeses} meses`) : null),
         h('p', { class: 'note' }, p.descripcion),
         h('ul', {}, ...items.map(([k, on]) => h('li', { class: on ? '' : 'no' }, TXT[k])), h('li', {}, `Hasta ${p.dispositivos} dispositivos`)),
         btn));
     });
+    // Renovación del programa: franja aparte, para quien ya tiene el libro
+    const rb = $('#renovar'); rb.innerHTML = ''; rb.hidden = !(renov && renov.aLaVenta && renov.precio > 0);
+    if (!rb.hidden) {
+      const comprar = CONF.paypalClientId ? h('button', { class: 'btn gold' }, 'Renovar o agregar · US$' + renov.precio) : h('a', { class: 'btn ghost', href: 'mailto:' + (CONF.soporte || CFG.SOPORTE || '') + '?subject=' + encodeURIComponent('Quiero renovar: ' + renov.nombre) }, 'Escríbanos para renovar');
+      if (CONF.paypalClientId) comprar.onclick = () => elegir(renov);
+      rb.append(h('div', {}, h('b', {}, '¿Ya tiene el libro? ' + renov.nombre), h('p', { class: 'note' }, renov.descripcion + ' Use el mismo correo de su compra: si su programa sigue vigente, los meses nuevos se suman al final.')),
+        h('div', { class: 'renov-precio' }, h('b', {}, '$' + renov.precio), h('small', {}, 'USD · pago único'), h('small', {}, '🌱 Programa por ' + renov.vigenciaMeses + ' meses')), comprar);
+    }
   }
-
   /* ---------- compra ---------- */
   let ppLoaded = null;
   function cargarPayPal() {
@@ -477,6 +492,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     renderPlanes();
     if (r.muestra && JSON.stringify(r.muestra) !== JSON.stringify(MU)) montarMuestras(r.muestra);
     if (location.hash === '#comprar') { const p = r.planes.find(x => x.codigo === 'LIBRO'); if (p && p.aLaVenta) elegir(p); }
+    if (location.hash === '#renovar') { const p = r.planes.find(x => x.codigo === 'RENOVACION'); const el = document.getElementById('renovar'); if (el) el.scrollIntoView({ block: 'center' }); if (p && p.aLaVenta && r.paypalClientId) elegir(p); }
   })();
 })();
 </script>
