@@ -160,6 +160,25 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
 .spin{width:18px;height:18px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--dorado);display:inline-block;vertical-align:middle}
 @media (prefers-reduced-motion:no-preference){.spin{animation:sp .9s linear infinite}}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+/* ventana de compra por transferencia */
+.sol{border:none;border-radius:22px;padding:0;width:min(560px,94vw);max-height:92vh;background:var(--panel);color:var(--ink);box-shadow:0 30px 80px -20px rgba(20,25,40,.55)}
+.sol::backdrop{background:rgba(20,22,32,.55);backdrop-filter:blur(2px)}
+.sol form,.sol .solres{display:flex;flex-direction:column;gap:13px;padding:24px 24px 22px}
+.sol h3{font-size:1.55rem;color:var(--azul-deep);margin:0;padding-right:34px}
+.sol .x{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:none;background:var(--panel2);color:var(--ink);font-size:1.3rem;cursor:pointer}
+.sol .sum{margin:0}
+.sol select,.sol textarea{font:1rem var(--body);padding:11px 13px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);width:100%}
+.sol textarea{min-height:70px;resize:vertical}
+.tel{display:flex;gap:8px}.tel .pref{flex:0 0 78px;width:78px;text-align:center;font:800 1rem var(--body);color:var(--ink);padding:0 8px;border:1.5px solid var(--line);border-radius:12px;background:var(--panel2);font-weight:800;min-width:70px}
+.seguro{display:flex;gap:10px;align-items:flex-start;background:color-mix(in srgb,var(--verde) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--verde) 35%,var(--panel));border-radius:14px;padding:11px 13px;font-size:.88rem}
+.seguro b{color:var(--verde)}
+.cuenta{border:1.5px solid var(--dorado);border-radius:14px;padding:13px 15px;background:color-mix(in srgb,var(--dorado) 8%,var(--panel));display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:.95rem}
+.cuenta dt{font-weight:800;color:var(--muted)}.cuenta dd{margin:0}.cuenta .num{font-weight:800;font-size:1.08rem;letter-spacing:.02em}
+.cuenta .ins{grid-column:1/-1;font-size:.85rem;color:var(--muted);margin-top:4px}
+.refcode{font:800 1.5rem var(--body);letter-spacing:.08em;color:var(--azul-deep);background:var(--accent-soft);border-radius:12px;padding:8px 14px;text-align:center}
+.pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.alt{font-size:.9rem;text-align:center}.alt button{background:none;border:none;color:var(--azul);font:700 .9rem var(--body);text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body>
@@ -221,7 +240,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     <section class="sec" id="planes">
       <div class="eyebrow">Planes</div>
       <h2>Elija su acceso</h2>
-      <p class="intro">Precios en dólares estadounidenses (USD). PayPal convierte automáticamente desde quetzales u otra moneda de su tarjeta.</p>
+      <p class="intro">Precios en dólares estadounidenses (USD). Puede pagar con tarjeta, transferencia bancaria o PayPal. Su licencia se activa sola al confirmarse el pago.</p>
       <div class="plans" id="plans"><p class="note"><span class="spin"></span> Cargando precios…</p></div>
       <div class="renovar" id="renovar" hidden></div>
 
@@ -232,14 +251,16 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
           <label class="field">Correo para entrar al libro<input type="email" id="coEmail" autocomplete="email" placeholder="correo@ejemplo.com"></label>
           <label class="field">Confirme el correo<input type="email" id="coEmail2" autocomplete="email" placeholder="Escríbalo de nuevo"></label>
           <label class="chk"><input type="checkbox" id="coTerms"><span>Acepto los <a href="#terminos">términos de la licencia personal</a>: es para mi uso y el de mi familia en hasta <b id="coDevs">3</b> dispositivos, y no compartiré mi acceso ni el contenido.</span></label>
-          <p class="note">Este correo será su llave de acceso. Puede ser distinto al de su cuenta de PayPal.</p>
+          <p class="note">Este correo será su llave de acceso. Puede ser distinto al de la tarjeta o la cuenta con la que paga.</p>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px">
           <div class="eyebrow">Paso 2 de 2 · Pago</div>
           <div class="sum"><span id="coName">Libro digital</span><b id="coPrice">—</b><span>Total</span><b id="coTotal">—</b></div>
+          <div id="reWrap" class="lock" hidden><button class="btn gold" type="button" id="reBtn" style="width:100%">💳 Pagar con tarjeta o transferencia bancaria</button><p class="note" id="reNota" style="margin:6px 0 0;text-align:center"></p></div>
           <div id="ppWrap" class="lock"><div id="ppBox"></div></div>
+          <p class="alt" id="coAltP">¿No tiene PayPal ni tarjeta? <button type="button" id="coAlt">Pagar por transferencia o depósito</button></p>
           <div class="fb" id="coFb" aria-live="polite">Complete el paso 1 para activar el pago.</div>
-          <p class="note">El pago se procesa en PayPal; nunca vemos los datos de su tarjeta. Al confirmarse, su licencia se activa sola y le llega un correo de bienvenida.</p>
+          <p class="note" id="coSeg">El pago se procesa en una plataforma segura; nunca vemos los datos de su tarjeta. Al confirmarse, su licencia se activa sola y le llega un correo de bienvenida.</p>
         </div>
       </div>
       <div class="checkout" id="doneBox" hidden style="grid-template-columns:1fr"></div>
@@ -249,6 +270,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       <div class="eyebrow">Preguntas frecuentes</div>
       <h2>Antes de comprar</h2>
       <div class="faq">
+        <details><summary>¿Puedo pagar sin PayPal?</summary><p>Sí. Puede pagar con tarjeta Visa o Mastercard, o por transferencia desde su banco. En cuanto el pago se confirma, su licencia se activa sola y le llega el correo de bienvenida.</p></details>
         <details><summary>¿Cómo entro después de pagar?</summary><p>Al confirmarse el pago recibirá un correo de bienvenida. Entre en «Ya compré · Entrar», escriba su correo y le enviaremos un código de 6 dígitos de un solo uso. No necesita contraseña.</p></details>
         <details><summary>¿En cuántos dispositivos puedo usarlo?</summary><p>La licencia del libro permite hasta 3 dispositivos a la vez (por ejemplo, teléfono, tableta y computadora). Si cambia de equipo, desde «Mi cuenta» puede desconectar el que ya no usa.</p></details>
         <details><summary>¿Se guardan mi diario y mi progreso?</summary><p>Sí. Las fábulas leídas, las reflexiones, las estrellas, los sellos y las ruedas del bienestar se guardan en la nube, en su cuenta. Puede imprimir o guardar su diario en PDF cuando quiera.</p></details>
@@ -280,6 +302,26 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
   </div>
 </footer>
 
+<dialog class="sol" id="sol" aria-labelledby="solTit">
+  <button class="x" type="button" id="solX" aria-label="Cerrar">×</button>
+  <form id="solForm" novalidate>
+    <div class="eyebrow" id="solEye">Pago por transferencia o depósito</div>
+    <h3 id="solTit">Libro digital</h3>
+    <div class="sum" id="solSum"><span id="solName"></span><b id="solPrice"></b></div>
+    <p class="note" id="solIntro">Déjenos su correo y su teléfono. Le mostramos aquí mismo los datos de la cuenta de su país y se los enviamos también a su correo.</p>
+    <label class="field">Correo (será su llave para entrar al libro)<input type="email" id="solEmail" autocomplete="email" placeholder="correo@ejemplo.com" required></label>
+    <label class="field">Confirme el correo<input type="email" id="solEmail2" autocomplete="email" placeholder="Escríbalo de nuevo" required></label>
+    <label class="field">País<select id="solPais"></select></label>
+    <label class="field">Teléfono o WhatsApp<div class="tel"><input class="pref" id="solPref" value="+502" readonly aria-label="Código de país" maxlength="5" inputmode="tel"><input type="tel" id="solTel" inputmode="tel" autocomplete="tel-national" placeholder="5555 1234" required></div></label>
+    <label class="field" id="solNotaWrap" hidden>Cuéntenos su necesidad (institución, número de personas…)<textarea id="solNota" maxlength="500"></textarea></label>
+    <label class="chk" id="solTermsWrap"><input type="checkbox" id="solTerms"><span>Acepto los <a href="#terminos" target="_blank">términos de la licencia personal</a>.</span></label>
+    <div class="seguro"><span aria-hidden="true">🔒</span><span><b>Sus datos están seguros.</b> Usamos su correo y su teléfono solo para esta compra y para su acceso al libro. No los compartimos con nadie ni le enviaremos publicidad.</span></div>
+    <div class="fb" id="solFb" aria-live="polite"></div>
+    <button class="btn gold" type="submit" id="solBtn">Ver los datos para pagar</button>
+  </form>
+  <div class="solres" id="solRes" hidden></div>
+</dialog>
+
 <script src="config.js"></script>
 <script>
 (function () {
@@ -308,6 +350,11 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     PLAN_NO_DISPONIBLE: 'Este plan todavía no está a la venta.',
     DEMASIADOS_INTENTOS: 'Demasiados intentos. Espere unos minutos.',
     PAYPAL_NO_RESPONDE: 'PayPal no respondió. Inténtelo de nuevo en un momento.',
+    PASARELA_NO_CONFIGURADA: 'El pago con tarjeta todavía no está disponible.',
+    PASARELA_NO_RESPONDE: 'La plataforma de pago no respondió. Inténtelo de nuevo en un momento.',
+    PEDIDO_NO_ENCONTRADO: 'No encontramos ese pedido. Si se hizo un cargo, escríbanos.',
+    TELEFONO_INVALIDO: 'Revise el teléfono: escriba solo el número, sin el código de país (entre 6 y 14 dígitos).',
+    PAIS_INVALIDO: 'Elija su país.',
     PAGO_NO_COMPLETADO: 'El pago no se completó. No se hizo ningún cargo.',
     PAGO_NO_VALIDO: 'No pudimos validar el pago. Escríbanos con su número de recibo de PayPal.',
     ERROR_INTERNO: 'Hubo un problema en el servidor. Si PayPal le cobró, su licencia se activará en unos minutos; si no, escríbanos.'
@@ -382,12 +429,12 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       const inc = new Set(p.incluye);
       const items = [['libro', inc.has('libro')], ['juegos', inc.has('libro')], ['diario', inc.has('libro')], ['iebi', inc.has('iebi')], ['programa', inc.has('programa')], ['pro', inc.has('pro')]];
       const star = p.codigo === 'LIBRO', disp = p.aLaVenta && (p.precio > 0 || p.codigo === 'PRO');
-      const vend = p.aLaVenta && p.precio > 0 && CONF.paypalClientId;
+      const vend = p.aLaVenta && p.precio > 0 && (CONF.paypalClientId || CONF.recurrente);
       const soon = !p.aLaVenta && p.codigo !== 'PRO';
       let btn;
       if (vend) { btn = h('button', { class: 'btn ' + (star ? 'gold' : ''), 'data-plan': p.codigo }, 'Comprar'); btn.onclick = () => elegir(p); }
-      else if (p.codigo === 'PRO') btn = h('a', { class: 'btn ghost', href: 'mailto:' + (CONF.soporte || CFG.SOPORTE || '') + '?subject=' + encodeURIComponent('Cotización 365 Fábulas MIELSY · profesional/institucional') }, 'Solicitar cotización');
-      else if (p.aLaVenta && p.precio > 0) btn = h('a', { class: 'btn ghost', href: 'mailto:' + (CONF.soporte || CFG.SOPORTE || '') + '?subject=' + encodeURIComponent('Quiero comprar: ' + p.nombre) }, 'Escríbanos para comprar'); // a la venta, pero PayPal aún sin configurar
+      else if (p.codigo === 'PRO' && p.aLaVenta) { btn = h('button', { class: 'btn ghost', 'data-plan': p.codigo }, 'Solicitar cotización'); btn.onclick = () => abrirSolicitud(p); }
+      else if (p.aLaVenta && p.precio > 0) { btn = h('button', { class: 'btn ' + (star ? 'gold' : ''), 'data-plan': p.codigo }, 'Comprar'); btn.onclick = () => abrirSolicitud(p); } // sin PayPal: transferencia o depósito
       else btn = h('button', { class: 'btn ghost', disabled: '' }, soon ? 'Próximamente' : 'No disponible');
       box.append(h('div', { class: 'plan' + (star ? ' star' : '') },
         disp ? h('span', { class: 'tag' }, 'Disponible') : soon ? h('span', { class: 'tag soon' }, 'Próximamente') : null,
@@ -403,8 +450,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     // Renovación del programa: franja aparte, para quien ya tiene el libro
     const rb = $('#renovar'); rb.innerHTML = ''; rb.hidden = !(renov && renov.aLaVenta && renov.precio > 0);
     if (!rb.hidden) {
-      const comprar = CONF.paypalClientId ? h('button', { class: 'btn gold' }, 'Renovar o agregar · US$' + renov.precio) : h('a', { class: 'btn ghost', href: 'mailto:' + (CONF.soporte || CFG.SOPORTE || '') + '?subject=' + encodeURIComponent('Quiero renovar: ' + renov.nombre) }, 'Escríbanos para renovar');
-      if (CONF.paypalClientId) comprar.onclick = () => elegir(renov);
+      const comprar = h('button', { class: 'btn gold' }, 'Renovar o agregar · US$' + renov.precio);
+      comprar.onclick = () => (CONF.paypalClientId || CONF.recurrente) ? elegir(renov) : abrirSolicitud(renov);
       rb.append(h('div', {}, h('b', {}, '¿Ya tiene el libro? ' + renov.nombre), h('p', { class: 'note' }, renov.descripcion + ' Use el mismo correo de su compra: si su programa sigue vigente, los meses nuevos se suman al final.')),
         h('div', { class: 'renov-precio' }, h('b', {}, '$' + renov.precio), h('small', {}, 'USD · pago único'), h('small', {}, '🌱 Programa por ' + renov.vigenciaMeses + ' meses')), comprar);
     }
@@ -428,7 +475,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     if (!emailOk(a)) m = 'Escriba el correo con el que entrará al libro.';
     else if (a !== b) m = 'Los dos correos no coinciden.';
     else if (!t) m = 'Acepte los términos de la licencia para continuar.';
-    $('#ppWrap').classList.toggle('lock', !!m);
+    $('#ppWrap').classList.toggle('lock', !!m); $('#reWrap').classList.toggle('lock', !!m); $('#reBtn').disabled = !!m;
     fb.className = 'fb'; fb.textContent = m || 'Todo listo: elija cómo pagar.';
     return !m;
   }
@@ -442,6 +489,10 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     $('#checkout').scrollIntoView({ behavior: 'smooth', block: 'start' });
     setTimeout(() => $('#coEmail').focus({ preventScroll: true }), 400);
     validar();
+    $('#reWrap').hidden = !CONF.recurrente; $('#ppWrap').hidden = !CONF.paypalClientId;
+    $('#coAltP').hidden = !CONF.transferencia;
+    if (CONF.recurrente) $('#reNota').textContent = CONF.recurrenteMoneda === 'GTQ' ? 'Se cobra en quetzales: Q' + Math.ceil(p.precio * CONF.tipoCambio).toFixed(2) + ' · Visa, Mastercard o transferencia desde su banco' : 'Visa, Mastercard o transferencia desde su banco';
+    if (!CONF.paypalClientId) return;
     const box = $('#ppBox');
     if (box.dataset.ready) return;
     box.innerHTML = '<p class="note"><span class="spin"></span> Cargando PayPal…</p>';
@@ -467,6 +518,33 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       onError: () => { $('#coFb').className = 'fb bad'; $('#coFb').textContent = 'PayPal no pudo completar la operación. No se hizo ningún cargo; inténtelo de nuevo.'; }
     }).render('#ppBox');
   }
+  /* ---------- Recurrente: tarjeta o transferencia, con regreso automático ---------- */
+  $('#reBtn').onclick = async () => {
+    if (!validar()) return;
+    const fb = $('#coFb'); $('#reBtn').disabled = true; fb.className = 'fb'; fb.innerHTML = '<span class="spin"></span> Abriendo el pago seguro…';
+    const r = await api('crearCheckout', { plan: PLAN.codigo, email: $('#coEmail').value.trim().toLowerCase() });
+    if (!r.ok) { $('#reBtn').disabled = false; fb.className = 'fb bad'; fb.textContent = err(r.error); return; }
+    try { window.top.location.href = r.url; } catch (e) { window.open(r.url, '_blank'); }
+  };
+  async function revisarRegreso() {
+    const q = new URLSearchParams(location.search);
+    if (q.get('pago') === 'cancelado') { history.replaceState(null, '', location.pathname); const d = $('#doneBox'); d.hidden = false; d.innerHTML = '';
+      d.append(h('div', { class: 'done' }, h('h3', {}, 'Pago cancelado'), h('p', {}, 'No se hizo ningún cargo. Puede intentarlo de nuevo cuando quiera.'))); d.scrollIntoView({ block: 'center' }); return; }
+    if (q.get('pago') !== 'ok' || !q.get('ped')) return;
+    const ped = q.get('ped'), d = $('#doneBox'); d.hidden = false; d.innerHTML = '';
+    d.append(h('div', { class: 'done' }, h('div', { class: 'big', style: 'background:var(--panel2);color:var(--dorado-ink)' }, h('span', { class: 'spin' })), h('h3', {}, 'Confirmando su pago…'), h('p', {}, 'Un momento: estamos activando su licencia.')));
+    d.scrollIntoView({ block: 'center' });
+    let r;
+    for (let i = 0; i < 8; i++) {
+      r = await api('verificarPago', { ped });
+      if (r.ok) { history.replaceState(null, '', location.pathname); return listo(r.email); }
+      if (r.error !== 'PAGO_PENDIENTE' && r.error !== 'RED' && r.error !== 'PASARELA_NO_RESPONDE') break;
+      await new Promise(ok => setTimeout(ok, 3000));
+    }
+    history.replaceState(null, '', location.pathname);
+    if (r.error === 'PAGO_PENDIENTE') return pendiente(r.email || 'su correo', true);
+    d.innerHTML = ''; d.append(h('div', { class: 'done' }, h('h3', {}, 'No pudimos confirmar el pago'), h('p', { class: 'fb bad' }, err(r.error))));
+  }
   function listo(email) {
     const app = (CFG.APP_URL || 'app.html') + '?email=' + encodeURIComponent(email);
     $('#checkout').hidden = true; const d = $('#doneBox'); d.hidden = false; d.innerHTML = '';
@@ -475,10 +553,83 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
       h('a', { class: 'btn gold', href: app, target: window.top !== window.self ? '_blank' : '_self' }, 'Entrar a mis fábulas')));
     d.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  function pendiente(email) {
+  function pendiente(email, banco) {
     $('#checkout').hidden = true; const d = $('#doneBox'); d.hidden = false; d.innerHTML = '';
-    d.append(h('div', { class: 'done' }, h('div', { class: 'big', style: 'background:var(--panel2);color:var(--dorado-ink)' }, '…'), h('h3', {}, 'Pago recibido, en revisión por PayPal'),
-      h('p', {}, 'PayPal está verificando el pago. En cuanto lo confirme, activaremos su licencia y le escribiremos a ', h('b', {}, email), '. No necesita volver a pagar.')));
+    d.append(h('div', { class: 'done' }, h('div', { class: 'big', style: 'background:var(--panel2);color:var(--dorado-ink)' }, '…'),
+      h('h3', {}, banco ? 'Pago en proceso' : 'Pago recibido, en revisión por PayPal'),
+      h('p', {}, banco ? 'Si pagó por transferencia, el banco puede tardar en confirmarla. El sistema la revisa solo y, en cuanto se confirme, activará su licencia y le escribirá a ' : 'PayPal está verificando el pago. En cuanto lo confirme, activaremos su licencia y le escribiremos a ', h('b', {}, email), '. No necesita volver a pagar.')));
+  }
+
+  /* ---------- compra por transferencia o depósito (sin PayPal) ---------- */
+  const PAISES = [['GT','Guatemala','+502'],['SV','El Salvador','+503'],['HN','Honduras','+504'],['NI','Nicaragua','+505'],['CR','Costa Rica','+506'],['PA','Panamá','+507'],
+    ['MX','México','+52'],['BZ','Belice','+501'],['CU','Cuba','+53'],['DO','República Dominicana','+1'],['PR','Puerto Rico','+1'],['CO','Colombia','+57'],['VE','Venezuela','+58'],
+    ['EC','Ecuador','+593'],['PE','Perú','+51'],['BO','Bolivia','+591'],['CL','Chile','+56'],['AR','Argentina','+54'],['PY','Paraguay','+595'],['UY','Uruguay','+598'],
+    ['BR','Brasil','+55'],['US','Estados Unidos','+1'],['CA','Canadá','+1'],['ES','España','+34'],['OT','Otro país','+']];
+  const sel = $('#solPais');
+  PAISES.forEach(([c, n, t]) => sel.append(h('option', { value: c }, n + (t !== '+' ? ' (' + t + ')' : ''))));
+  const prefijo = () => { const p = PAISES.find(x => x[0] === sel.value); return p ? p[2] : '+'; };
+  sel.onchange = () => { const t = prefijo(), pr = $('#solPref'); pr.value = t; pr.readOnly = t !== '+'; if (t === '+') { pr.placeholder = '+44'; pr.focus(); } };
+  let SOL = null;
+  function abrirSolicitud(p) {
+    SOL = p; const cot = p.codigo === 'PRO';
+    $('#solForm').hidden = false; $('#solRes').hidden = true; $('#solFb').textContent = ''; $('#solFb').className = 'fb';
+    $('#solTit').textContent = p.nombre; $('#solName').textContent = cot ? 'Plan profesional / institucional' : p.nombre;
+    $('#solPrice').textContent = cot ? 'A medida' : 'US$' + p.precio.toFixed(p.precio % 1 ? 2 : 0);
+    $('#solEye').textContent = cot ? 'Solicitud de cotización' : 'Pago por transferencia o depósito';
+    $('#solIntro').textContent = cot ? 'Déjenos sus datos y lo que necesita. Le escribiremos con una propuesta a su medida.'
+      : 'Déjenos su correo y su teléfono. Le mostramos aquí mismo los datos de la cuenta de su país y se los enviamos también a su correo.';
+    $('#solNotaWrap').hidden = !cot; $('#solTermsWrap').hidden = cot;
+    $('#solBtn').textContent = cot ? 'Enviar solicitud' : 'Ver los datos para pagar';
+    const e = $('#coEmail') && $('#coEmail').value.trim(); if (e && !$('#solEmail').value) { $('#solEmail').value = e; $('#solEmail2').value = $('#coEmail2').value.trim(); }
+    sel.onchange();
+    if (typeof $('#sol').showModal === 'function') $('#sol').showModal(); else $('#sol').setAttribute('open', '');
+    setTimeout(() => $('#solEmail').focus(), 60);
+  }
+  const cerrarSol = () => { if ($('#sol').close) $('#sol').close(); else $('#sol').removeAttribute('open'); };
+  $('#solX').onclick = cerrarSol;
+  $('#sol').addEventListener('click', ev => { if (ev.target === $('#sol')) cerrarSol(); });
+  $('#coAlt').onclick = () => PLAN && abrirSolicitud(PLAN);
+  $('#solForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const cot = SOL.codigo === 'PRO', fb = $('#solFb');
+    const email = $('#solEmail').value.trim().toLowerCase(), email2 = $('#solEmail2').value.trim().toLowerCase();
+    const cod = ($('#solPref').value || '').replace(/[^\d+]/g, ''), tel = $('#solTel').value.replace(/\D/g, '');
+    let m = '';
+    if (!emailOk(email)) m = 'Escriba un correo válido.';
+    else if (email !== email2) m = 'Los dos correos no coinciden.';
+    else if (!/^\+\d{1,4}$/.test(cod)) m = 'Escriba el código de su país (por ejemplo +44).';
+    else if (tel.length < 6 || tel.length > 14) m = err('TELEFONO_INVALIDO');
+    else if (!cot && !$('#solTerms').checked) m = 'Acepte los términos de la licencia para continuar.';
+    if (m) { fb.className = 'fb bad'; fb.textContent = m; return; }
+    $('#solBtn').disabled = true; fb.className = 'fb'; fb.innerHTML = '<span class="spin"></span> Enviando…';
+    const r = await api('solicitarCompra', { plan: SOL.codigo, email, codigoPais: cod, telefono: tel, pais: sel.value, nota: cot ? $('#solNota').value.trim() : '' });
+    $('#solBtn').disabled = false;
+    if (!r.ok) { fb.className = 'fb bad'; fb.textContent = err(r.error); return; }
+    mostrarDatosPago(r, email);
+  });
+  function mostrarDatosPago(r, email) {
+    const box = $('#solRes'); box.innerHTML = ''; $('#solForm').hidden = true; box.hidden = false;
+    if (r.cotizacion) {
+      box.append(h('div', { class: 'done' }, h('div', { class: 'big' }, '✓'), h('h3', {}, 'Solicitud recibida'),
+        h('p', {}, 'Le escribiremos pronto a ', h('b', {}, email), ' con una propuesta. Su referencia es:'), h('div', { class: 'refcode' }, r.solicitudId),
+        h('button', { class: 'btn ghost', type: 'button', onclick: cerrarSol }, 'Cerrar')));
+      return;
+    }
+    const wa = r.whatsapp ? 'https://wa.me/' + r.whatsapp + '?text=' + encodeURIComponent('Hola, envío el comprobante de pago de ' + r.plan + '. Código: ' + r.solicitudId + ' · Correo: ' + email) : '';
+    box.append(h('div', { class: 'eyebrow' }, 'Datos para su pago'), h('h3', {}, r.plan));
+    if (r.cuentas.length) {
+      box.append(h('p', {}, h('b', {}, '1. '), 'Haga la transferencia o el depósito a:'));
+      r.cuentas.forEach(c => box.append(h('dl', { class: 'cuenta' },
+        h('dt', {}, 'Banco'), h('dd', {}, c.banco), h('dt', {}, 'Titular'), h('dd', {}, c.titular),
+        h('dt', {}, c.tipo || 'Cuenta'), h('dd', { class: 'num' }, c.numero),
+        h('dt', {}, 'Monto'), h('dd', { class: 'num' }, (c.moneda === 'USD' ? 'US$' : c.moneda + ' ') + c.monto + (c.moneda !== 'USD' ? ' (equivale a US$' + r.precio + ')' : '')),
+        c.instrucciones ? h('dd', { class: 'ins' }, c.instrucciones) : null)));
+    } else box.append(h('p', {}, h('b', {}, '1. '), 'Le enviaremos a su correo los datos de la cuenta para su país en las próximas horas.'));
+    box.append(h('p', {}, h('b', {}, '2. '), 'Escriba en la descripción del pago este código:'), h('div', { class: 'refcode' }, r.solicitudId),
+      h('p', {}, h('b', {}, '3. '), 'Envíenos la foto del comprobante', wa ? ' por WhatsApp o' : '', ' a ', h('a', { href: 'mailto:' + r.soporte + '?subject=' + encodeURIComponent('Comprobante ' + r.solicitudId) }, r.soporte), '.'),
+      wa ? h('a', { class: 'btn gold', href: wa, target: '_blank', rel: 'noopener' }, '📱 Enviar comprobante por WhatsApp') : null,
+      h('div', { class: 'seguro' }, h('span', {}, '✉️'), h('span', {}, 'También le enviamos estos datos a ', h('b', {}, email), '. Activamos su licencia en un máximo de ' + r.horas + ' horas hábiles después de recibir el comprobante y le llegará el correo de bienvenida.')),
+      h('button', { class: 'btn ghost', type: 'button', onclick: cerrarSol }, 'Listo'));
   }
 
   /* ---------- arranque ---------- */
@@ -491,8 +642,9 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     CONF = r;
     renderPlanes();
     if (r.muestra && JSON.stringify(r.muestra) !== JSON.stringify(MU)) montarMuestras(r.muestra);
-    if (location.hash === '#comprar') { const p = r.planes.find(x => x.codigo === 'LIBRO'); if (p && p.aLaVenta) elegir(p); }
-    if (location.hash === '#renovar') { const p = r.planes.find(x => x.codigo === 'RENOVACION'); const el = document.getElementById('renovar'); if (el) el.scrollIntoView({ block: 'center' }); if (p && p.aLaVenta && r.paypalClientId) elegir(p); }
+    if (location.hash === '#comprar') { const p = r.planes.find(x => x.codigo === 'LIBRO'); if (p && p.aLaVenta) (r.paypalClientId || r.recurrente) ? elegir(p) : abrirSolicitud(p); }
+    if (location.hash === '#renovar') { const p = r.planes.find(x => x.codigo === 'RENOVACION'); const el = document.getElementById('renovar'); if (el) el.scrollIntoView({ block: 'center' }); if (p && p.aLaVenta) (r.paypalClientId || r.recurrente) ? elegir(p) : abrirSolicitud(p); }
+    revisarRegreso();
   })();
 })();
 </script>
