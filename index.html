@@ -114,8 +114,9 @@ section.sec{padding:44px 0}
 .spread img{width:100%;height:auto;aspect-ratio:1500/1962;border-radius:10px;box-shadow:0 14px 36px -18px rgba(35,48,60,.5);background:#fff}
 .spread figcaption{font:700 .8rem var(--body);color:var(--muted);text-align:center;letter-spacing:.04em}
 /* plans */
-.plans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:26px;align-items:stretch}
-@media (max-width:1000px){.plans{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px;margin-top:26px;align-items:stretch}
+.plan ul{columns:2 230px;column-gap:22px}.plan li{break-inside:avoid}
+
 @media (max-width:560px){.plans{grid-template-columns:1fr}}
 .plan{background:var(--panel);border:1.5px solid var(--line);border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;gap:12px;position:relative}
 .plan.star{border-color:var(--dorado);box-shadow:0 14px 40px -20px rgba(207,158,74,.7)}
@@ -249,7 +250,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
         <details><summary>¿Se guardan mi diario y mi progreso?</summary><p>Sí. Las fábulas leídas, las reflexiones, las estrellas, los sellos y las ruedas del bienestar se guardan en la nube, en su cuenta. Puede imprimir o guardar su diario en PDF cuando quiera.</p></details>
         <details><summary>¿Puede leerlo toda mi familia?</summary><p>Sí: dentro de una cuenta puede crear varios participantes (niños, adolescentes y adultos), cada uno con su propio recorrido, juegos y diario.</p></details>
         <details><summary>¿Necesito internet?</summary><p>Sí, las fábulas se abren en línea desde su cuenta. Si se corta la conexión, lo que escriba se guarda al volver.</p></details>
-        <details><summary>¿Cuándo estarán el IEBI-M13 y el programa completo?</summary><p>Se están preparando. Quien compre ahora el libro podrá ampliar su acceso más adelante con el mismo correo.</p></details>
+        <details><summary>¿Qué planes incluyen la evaluación IEBI-M13?</summary><p>La evaluación IEBI-M13 del Instituto MIELSY mide su bienestar en las mismas 13 dimensiones de las fábulas. Está incluida en el plan <b>Programa completo MIELSY</b>, junto con su plan de 30 días: al entrar al libro con su correo encontrará el acceso a la evaluación. Quien compre ahora el libro podrá ampliar su plan más adelante con el mismo correo.</p></details>
         <details><summary>¿Tengo un problema con mi compra?</summary><p>Escríbanos a <a class="soporte" href="mailto:">soporte</a> con el correo de su licencia y el número de pedido que aparece en su recibo de PayPal.</p></details>
       </div>
     </section>
@@ -375,15 +376,16 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     CONF.planes.forEach(p => {
       const inc = new Set(p.incluye);
       const items = [['libro', inc.has('libro')], ['juegos', inc.has('libro')], ['diario', inc.has('libro')], ['iebi', inc.has('iebi')], ['programa', inc.has('programa')], ['pro', inc.has('pro')]];
-      const star = p.codigo === 'LIBRO';
+      const star = p.codigo === 'LIBRO', disp = p.aLaVenta && (p.precio > 0 || p.codigo === 'PRO');
       const vend = p.aLaVenta && p.precio > 0 && CONF.paypalClientId;
       const soon = !p.aLaVenta && p.codigo !== 'PRO';
       let btn;
       if (vend) { btn = h('button', { class: 'btn ' + (star ? 'gold' : ''), 'data-plan': p.codigo }, 'Comprar'); btn.onclick = () => elegir(p); }
       else if (p.codigo === 'PRO') btn = h('a', { class: 'btn ghost', href: 'mailto:' + (CONF.soporte || CFG.SOPORTE || '') + '?subject=' + encodeURIComponent('Cotización 365 Fábulas MIELSY · profesional/institucional') }, 'Solicitar cotización');
+      else if (p.aLaVenta && p.precio > 0) btn = h('a', { class: 'btn ghost', href: 'mailto:' + (CONF.soporte || CFG.SOPORTE || '') + '?subject=' + encodeURIComponent('Quiero comprar: ' + p.nombre) }, 'Escríbanos para comprar'); // a la venta, pero PayPal aún sin configurar
       else btn = h('button', { class: 'btn ghost', disabled: '' }, soon ? 'Próximamente' : 'No disponible');
       box.append(h('div', { class: 'plan' + (star ? ' star' : '') },
-        star ? h('span', { class: 'tag' }, 'Disponible') : soon ? h('span', { class: 'tag soon' }, 'Próximamente') : null,
+        disp ? h('span', { class: 'tag' }, 'Disponible') : soon ? h('span', { class: 'tag soon' }, 'Próximamente') : null,
         h('h3', {}, p.nombre),
         h('div', { class: 'price' }, p.precio > 0 ? '$' + p.precio.toFixed(p.precio % 1 ? 2 : 0) : 'A medida', ' ', h('small', {}, p.precio > 0 ? 'USD' + (p.vigenciaMeses ? ` · ${p.vigenciaMeses} meses` : ' · pago único') : '')),
         h('p', { class: 'note' }, p.descripcion),
