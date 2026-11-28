@@ -470,7 +470,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
     if (ppLoaded) return ppLoaded;
     ppLoaded = new Promise((ok, ko) => {
       const s = document.createElement('script');
-      s.src = CFG.PAYPAL_SDK_URL || ('https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(CONF.paypalClientId) + '&currency=' + CONF.moneda + '&intent=capture&locale=es_XC&components=buttons');
+      s.src = CFG.PAYPAL_SDK_URL || ('https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(CONF.paypalClientId) + '&currency=' + CONF.moneda + '&intent=capture&components=buttons');
       s.onload = ok; s.onerror = () => { ppLoaded = null; ko(); };
       document.head.append(s);
     });
